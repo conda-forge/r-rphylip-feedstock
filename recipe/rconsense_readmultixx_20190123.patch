@@ -2,8 +2,8 @@ This patch addresses and solves some extreme case bugs
 - read.multi.xxf failed for infiles with >100 taxa due to erroneous assumptions on number of  prepending spaces before ntaxa statement
 - rconsense failed for completely unresolved trees
 (- as a bonus some verbosity fixes apparently not present in the cran version of the source got included)
---- Rphylip.R	2019-01-23 13:08:59.000000000 +0100
-+++ new/newRhylip.R	2019-01-23 16:31:04.000000000 +0100
+--- R/Rphylip.R	2019-01-23 13:08:59.000000000 +0100
++++ R/Rphylip.R	2019-01-23 16:31:04.000000000 +0100
 @@ -3,7 +3,8 @@
  
  read.multi.dna<-function(file,N,n){
