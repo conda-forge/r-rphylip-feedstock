@@ -1,0 +1,274 @@
+This patch addresses and solves some extreme case bugs
+- read.multi.xxf failed for infiles with >100 taxa due to erroneous assumptions on number of  prepending spaces before ntaxa statement
+- rconsense failed for completely unresolved trees
+(- as a bonus some verbosity fixes apparently not present in the cran version of the source got included)
+--- R/Rphylip.R	2019-01-23 13:08:59.000000000 +0100
++++ R/Rphylip.R	2019-01-23 16:31:04.000000000 +0100
+@@ -3,7 +3,8 @@
+ 
+ read.multi.dna<-function(file,N,n){
+ 	FF<-readLines(file)
+-	skip<-grep(pattern=paste("   ",n,sep=""),FF)-1
++	nspc<-5-nchar(n)
++	skip<-grep(pattern=paste(strrep(" ",nspc),n,sep=""),FF)-1
+ 	X<-lapply(skip,read.dna,file=file,format="sequential")
+ 	return(X)
+ }
+@@ -13,7 +14,8 @@
+ 
+ read.multi.phylip.data<-function(file,N,n){
+ 	FF<-readLines(file)
+-	skip<-grep(pattern=paste("   ",n,sep=""),FF)-1
++	nspc<-5-nchar(n)
++	skip<-grep(pattern=paste(strrep(" ",nspc),n,sep=""),FF)-1
+ 	X<-lapply(skip,read.phylip.data,file=file,format="sequential")
+ 	return(X)
+ }
+@@ -23,7 +25,8 @@
+ 
+ read.multi.rest.data<-function(file,N,n){
+ 	FF<-readLines(file)
+-	skip<-grep(pattern=paste("   ",n,sep=""),FF)-1
++	nspc<-5-nchar(n)
++	skip<-grep(pattern=paste(strrep(" ",nspc),n,sep=""),FF)-1
+ 	X<-lapply(skip,read.rest.data,file=file)
+ 	return(X)
+ }
+@@ -218,7 +221,7 @@
+ 	system(paste(path,"/clique",sep=""),input=oo,show.output.on.console=(!quiet))
+ 	tree<-read.tree("outtree")
+ 	temp<-readLines("outfile")
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -295,7 +298,7 @@
+ 	tree<-read.tree("outtree")
+ 	temp<-readLines("outfile")
+ 	logLik<-as.numeric(strsplit(temp[grep("Ln Likelihood",temp)],"=")[[1]][2])
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -365,7 +368,8 @@
+ ## written by Liam J. Revell 2014
+ 
+ write.rest.data<-function(X,append=FALSE){
+-	write(paste("    ",length(X),"   ",attr(X,"nsites"),"   ",attr(X,"nenzymes"),sep=""),file="infile",append=append)
++	nspc<-5-nchar(nrow(X))
++	write(paste(strrep(" ",nspc),length(X),"   ",attr(X,"nsites"),"   ",attr(X,"nenzymes"),sep=""),file="infile",append=append)
+ 	for(i in 1:length(X)){
+ 		sp<-as.character(i)
+ 		sp<-paste(sp,paste(rep(" ",11-nchar(sp)),collapse=""),collapse="")
+@@ -551,7 +555,7 @@
+ 	system(paste(path,"/kitsch",sep=""),input=oo,show.output.on.console=(!quiet))
+ 	tree<-read.tree("outtree")
+ 	temp<-readLines("outfile")
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -703,7 +707,7 @@
+ 	xx<-strsplit(temp[ii],"  ")[[1]]
+ 	if(class(tree)=="multiPhylo") for(i in 1:length(tree)) tree[[i]]$pscore<-as.numeric(xx[length(xx)])
+ 	else tree$pscore<-as.numeric(xx[length(xx)])
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -792,7 +796,7 @@
+ 	xx<-strsplit(temp[ii],"  ")[[1]]
+ 	if(class(tree)=="multiPhylo") for(i in 1:length(tree)) tree[[i]]$pscore<-as.numeric(xx[length(xx)])
+ 	else tree$pscore<-as.numeric(xx[length(xx)])
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -898,7 +902,7 @@
+ 	xx<-strsplit(temp[ii],"  ")[[1]]
+ 	if(class(tree)=="multiPhylo") for(i in 1:length(tree)) tree[[i]]$pscore<-as.numeric(xx[length(xx)])
+ 	else tree$pscore<-as.numeric(xx[length(xx)])
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -1003,7 +1007,7 @@
+ 		if(length(ii)>1) tree[[i]]$pscore<-as.numeric(xx[length(xx)])
+ 		else tree$pscore<-as.numeric(xx[length(xx)])
+ 	}
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -1146,7 +1150,7 @@
+ 		if(length(ii)>1) tree[[i]]$pscore<-as.numeric(xx[length(xx)])
+ 		else tree$pscore<-as.numeric(xx[length(xx)])
+ 	}
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -1241,7 +1245,7 @@
+ 	system(paste(path,"/fitch",sep=""),input=oo,show.output.on.console=(!quiet))
+ 	tree<-read.tree("outtree")
+ 	temp<-readLines("outfile")
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -1365,7 +1369,7 @@
+ 		if(length(ii)>1) tree[[i]]$compatible.sites<-as.numeric(xx[length(xx)])
+ 		else tree$compatible.sites<-as.numeric(xx[length(xx)])
+ 	}
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -1561,7 +1565,7 @@
+ 		if(length(ii)>1) tree[[i]]$pscore<-as.numeric(xx[length(xx)])
+ 		else tree$pscore<-as.numeric(xx[length(xx)])
+ 	}
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -1759,7 +1763,7 @@
+ 	tree<-read.tree("outtree")
+ 	temp<-readLines("outfile")
+ 	logLik<-as.numeric(strsplit(temp[grep("Ln Likelihood",temp)],"=")[[1]][2])
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -1821,8 +1825,12 @@
+ 	tree$tip.label<-tip.label[as.numeric(tree$tip.label)]
+ 	temp<-readLines("outfile")
+ 	if(!is.null(tree$edge.length)){
+-		tree$node.label<-c(NA,tree$edge.length[sapply(2:tree$Nnode+length(tree$tip.label),function(x,y) which(y==x),y=tree$edge[,2])]/length(trees))
+-		tree$edge.length<-NULL
++            if(tree$Nnode > 1){
++                tree$node.label <-c(NA, tree$edge.length[sapply(2:tree$Nnode + length(tree$tip.label), function(x, y) which(y ==  x), y = tree$edge[, 2])]/length(trees))
++            }else{
++                tree$node.label <-c(NA)
++            }
++            tree$edge.length<-NULL
+ 	}
+ 	if(!rooted) tree<-unroot(tree)
+ 	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+@@ -1887,7 +1895,7 @@
+ 		if(length(ii)>1) tree[[i]]$pscore<-as.numeric(xx[length(xx)])
+ 		else tree$pscore<-as.numeric(xx[length(xx)])
+ 	}
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -2161,7 +2169,11 @@
+ 	cc<-which(types=="c")
+ 	dd<-which(types=="d")
+ 	## parse covariance matrix
+-	ii<-grep("Covariance matrix",temp)+5
++	ii<-grep("Covariance matrix",temp)
++	if(temp[ii]==" Covariance matrix of continuous characters"||temp[ii]==" Covariance matrix of liabilities of discrete characters"){
++		if(temp[ii+1]==" and liabilities of discrete characters"||temp[ii+1]==" and liability of the discrete character") ii<-ii+5
++		else ii<-ii+3
++	} else ii<-ii+5
+ 	Covariance_matrix<-matrix(NA,ncol(X),ncol(X))
+ 	for(i in 1:ncol(X)){
+ 		x<-strsplit(temp[i+ii]," ")[[1]]
+@@ -2212,7 +2224,8 @@
+ 
+ write.continuous<-function(X,append=FALSE){
+ 	if(is.vector(X)) X<-as.matrix(X)
+-	write(paste("    ",nrow(X),"   ",ncol(X),sep=""),file="infile",append=append)
++	nspc<-5-nchar(nrow(X))
++	write(paste(strrep(" ",nspc),nrow(X),"   ",ncol(X),sep=""),file="infile",append=append)
+ 	for(i in 1:nrow(X)){
+ 		sp<-as.character(i)
+ 		sp<-paste(sp,paste(rep(" ",11-nchar(sp)),collapse=""),collapse="")
+@@ -2290,7 +2303,7 @@
+ 	system(paste(path,"/neighbor",sep=""),input=oo,show.output.on.console=(!quiet))
+ 	tree<-read.tree("outtree")
+ 	temp<-readLines("outfile")
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -2317,7 +2330,8 @@
+ ## written by Liam J. Revell 2013
+ 
+ write.distances<-function(D){
+-	write(paste("    ",nrow(D),sep=""),file="infile")
++	nspc<-5-nchar(nrow(D))
++	write(paste(strrep(" ",nspc),nrow(D),sep=""),file="infile")
+ 	for(i in 1:nrow(D)){
+ 		sp<-as.character(i)
+ 		sp<-paste(sp,paste(rep(" ",11-nchar(sp)),collapse=""),collapse="")
+@@ -2427,7 +2441,8 @@
+ ## written by Liam J. Revell 2013
+ 
+ write.dna<-function(X,append=FALSE){
+-	write(paste("    ",nrow(X),"   ",ncol(X),sep=""),file="infile",append=append)
++	nspc<-5-nchar(nrow(X))
++	write(paste(strrep(" ",nspc),nrow(X),"   ",ncol(X),sep=""),file="infile",append=append)
+ 	for(i in 1:nrow(X)){
+ 		sp<-as.character(i)
+ 		sp<-paste(sp,paste(rep(" ",11-nchar(sp)),collapse=""),collapse="")
+@@ -2524,7 +2539,7 @@
+ 		if(length(ii)>1) tree[[i]]$pscore<-as.numeric(xx[length(xx)])
+ 		else tree$pscore<-as.numeric(xx[length(xx)])
+ 	}
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -2599,7 +2614,7 @@
+ 		tree<-read.tree("outtree")
+ 		temp<-readLines("outfile")
+ 		logLik<-as.numeric(strsplit(temp[grep("Ln Likelihood",temp)],"=")[[1]][2])
+-		temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++		if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 		if(!quiet){
+ 			cat("Translation table\n")
+ 			cat("-----------------\n")
+@@ -2651,7 +2666,7 @@
+ 		tree<-read.tree("outtree")
+ 		temp<-readLines("outfile")
+ 		logLik<-as.numeric(strsplit(temp[grep("Ln Likelihood",temp)],"=")[[1]][2])
+-		temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++		if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 		if(!quiet){
+ 			cat("Translation table\n")
+ 			cat("-----------------\n")
+@@ -2759,7 +2774,7 @@
+ 	tree<-read.tree("outtree")
+ 	temp<-readLines("outfile")
+ 	logLik<-as.numeric(strsplit(temp[grep("Ln Likelihood",temp)],"=")[[1]][2])
+-	temp<-lapply(temp,function(x) { cat(x); cat("\n") })
++	if(!quiet) temp<-lapply(temp,function(x) { cat(x); cat("\n") })
+ 	if(!quiet){
+ 		cat("Translation table\n")
+ 		cat("-----------------\n")
+@@ -2854,6 +2869,7 @@
+ 		Contrasts<-matrix(NA,tree$Nnode,ncol(X))
+ 		for(i in 1:tree$Nnode){
+ 			x<-strsplit(temp[i+ii+2]," ")[[1]]
++
+ 			Contrasts[i,]<-as.numeric(x[x!=""])
+ 		}
+ 		ii<-grep("Covariance",temp)
