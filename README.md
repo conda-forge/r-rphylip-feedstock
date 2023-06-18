@@ -1,11 +1,11 @@
-About r-rphylip
-===============
+About r-rphylip-feedstock
+=========================
+
+Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/r-rphylip-feedstock/blob/main/LICENSE.txt)
 
 Home: https://cran.r-project.org/web/packages/Rphylip/index.html
 
 Package license: GPL-2.0-or-later
-
-Feedstock license: [BSD-3-Clause](https://github.com/conda-forge/r-rphylip-feedstock/blob/main/LICENSE.txt)
 
 Summary: Rphylip provides an R interface for the PHYLIP package. All users of Rphylip will thus first have to install the PHYLIP phylogeny methods program package (Felsenstein 2013). See http://www.phylip.com for more  information about installing PHYLIP.
 
