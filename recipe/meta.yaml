@@ -14,7 +14,7 @@ source:
     - rconsense_readmultixx_20190123.patch
 
 build:
-  number: 1006
+  number: 1007
   noarch: generic
   rpaths:
     - lib/R/lib/
